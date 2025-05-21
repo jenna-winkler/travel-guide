@@ -119,7 +119,7 @@ The BeeAI Platform will automatically:
 - Clone your repository
 - Build a Docker image
 - Start the agent container
-- Extract agent configuration directly from the /agents endpoint
+- Extract agent configuration directly from the `/agents` endpoint
 - Register the agent in the platform
 
 #### Version Management
