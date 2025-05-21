@@ -1,30 +1,64 @@
-# Agent template
+# BeeAI Platform Agent Template
 
-This is an example template for a python agent that can be used in the beeai platform.
+This repository provides a template for creating a Python agent that can be used with the [BeeAI Platform](https://docs.beeai.dev).
 
-To get started, click **Use this template** or fork this repository.
+## Overview
 
-## Pre-requisites
+BeeAI agents are Python-based services that can be run locally or deployed to the BeeAI Platform. Each agent implements specific functionality through the ACP (Agent Communication Protocol) SDK.
 
-- Python 3.11 or higher
-- UV package manager: https://docs.astral.sh/uv/
+In this template, you'll find:
+- A basic agent implementation
+- Docker configuration for deployment
+- Project structure for building your own agents
 
-## Implementing agent
-
-1. Install dependencies using `uv sync`
-
-2. Modify the source code in [src/beeai_agents/server.py](src/beeai_agents/agent.py) to add your agent implementation
-   in any agentic framework you like. You can add as many agents as you like.
-
-## Running agents locally
-
-You can experiment with the agents locally by running it directly:
+## Project Structure
 
 ```sh
+├── src/
+│   └── beeai_agents/
+│       ├── __init__.py
+│       └── agent.py    # Main agent implementation
+├── Dockerfile          # For containerized deployment
+├── pyproject.toml      # Project configuration and dependencies
+├── uv.lock             # Dependency lock file
+└── README.md           # This documentation
+```
+
+## Requirements
+
+- Python 3.11 or higher
+- [UV package manager](https://docs.astral.sh/uv/) for dependency management
+
+## Getting Started
+
+1. **Set up your project**. Start by using this template for your own agent. You may use this as a template or fork this repository.
+
+2. **Install dependencies** using `uv sync`.
+
+3. **Implement your agent** by modifying the source code located in [src/beeai_agents/server.py](src/beeai_agents/agent.py).
+
+Here's an example of the included template agent:
+
+```py
+@server.agent(
+    metadata=Metadata(ui={"type": "hands-off"})
+)
+async def example_agent(input: list[Message], context: Context) -> AsyncGenerator[RunYield, RunYieldResume]:
+    """Polite agent that greets the user"""
+    hello_template: str = os.getenv("HELLO_TEMPLATE", "Ciao %s!")
+    yield MessagePart(content=hello_template % str(input[-1]))
+```
+
+## Running Agents Locally
+
+To test your agent locally:
+
+```sh
+# Start the agent server
 uv run server
 ```
 
-You'll get an output similar to:
+This will start a local server on http://127.0.0.1:8000 by default. You'll get an output similar to:
 
 ```
 INFO:     Started server process [86448]
@@ -33,51 +67,52 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 ```
 
-Your agents should now be started on http://localhost:8000, you can now list agents using the beeai CLI:
+Your agents should now be started on http://localhost:8000. You can verify your agents are running with the BeeAI CLI:
 
 ```sh
+# List available agents
 beeai list
-```
 
-And run your agent:
-
-```sh
+# Run the example agent
 beeai run example_agent "Your Name"
 ```
 
-## Adding agents to the beeai platform
+## Adding Agents to BeeAI Platform
 
-Now you may want to add your agents to your collection in beeai. You can do that locally or from GitHub.
-Let's break it down.
+There are two ways to add your agent to the BeeAI Platform:
 
-### Locally
+### Local Development Mode
 
-The agents are automatically registered to the platform when you run them locally using `uv run server`. In this
-setup, the beeai platform will not manage the agent lifecycle (start / stop the agent).
+When running agents locally with `uv run server`, they are automatically registered with the BeeAI Platform. In this mode:
+- The BeeAI Platform will communicate with your local server
+- You manage the agent's lifecycle (starting/stopping)
+- Changes are immediately available without redeployment
 
-#### Add managed agent from GitHub
+### Deployment from GitHub
 
-If you want to share your agent with others using the beeai platform, the easiest way is to use a GitHub link to
-your repository you created with the template:
+To share your agent with others or deploy it to the BeeAI Platform:
+1. Create an `agent.yaml` manifest in your repository to specify agent metadata
+2. Add the agent to BeeAI using: `beeai add https://github.com/your-username/your-repo-name`
 
-1. Create [agent.yaml](agent.yaml) manifest with the agent name and metadata
-2. Add agent:
-   ```sh
-   beeai add https://github.com/i-am-bee/beeai-agent-starter-py
-   ```
+#### Version Management
 
-> Note: To manage versions properly and prevent automatic updates or breaking changes we recommend creating a tag
-> (for example `agents-v0.0.1`)
->   - Specify tag when adding agent: `beeai add https://github.com/org/repo@agents-v0.0.1`
->   - To release new version - create a new tag
->   - To update the agent in beeai you'll need to `beeai remove <agent-name>` and add it again.
+- For stable versions, use Git tags (e.g., `agents-v0.0.1`)
+- When adding a tagged version: `beeai add https://github.com/your-username/your-repo-name@agents-v0.0.1`
+- To update: remove the old version (`beeai remove <agent-name>`) and add the new one
 
 ## Troubleshooting
 
-**How do I know the status of the agent?**
+### Agent Status
 
-You can use `beeai list` to see whether the provider is initializing / ready or in an error state.
-For local provider you can see agent logs directly in the terminal after `uv run server`, for managed use
-`beeai logs <ID>`.
+To check the status of your agents:
 
-You can also inspect the beeai server logs for further details (typically in `/opt/homebrew/var/log/beeai-server.log`)
+```sh
+# List all agents and their status
+beeai list
+```
+
+### Logs
+
+- **Local agents:** View logs directly in the terminal where you ran `uv run server`
+- **Managed agents:** Use `beeai logs <agent-id>` to view logs
+- **BeeAI server logs:** Check `/opt/homebrew/var/log/beeai-server.log` (default location)
