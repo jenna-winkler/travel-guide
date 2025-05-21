@@ -24,7 +24,7 @@ In this template, you'll find:
 └── README.md                               # Project documentation
 ```
 
-### Key files to focus on:
+**Key files to focus on:**
 
 - `agent.py`: This is where you'll implement your agent logic
 - `pyproject.toml`: Update this if you need to add dependencies
