@@ -111,8 +111,16 @@ When running agents locally with `uv run server`, they are automatically registe
 ### Deployment from GitHub
 
 To share your agent with others or deploy it to the BeeAI Platform:
-1. Create an `agent.yaml` manifest in your repository to specify agent metadata. This file defines how your agent appears and behaves in the BeeAI Platform.
-2. Add the agent to BeeAI using: `beeai add https://github.com/your-username/your-repo-name`
+
+- Push your agent code to a GitHub repository
+- Add the agent to BeeAI using: `beeai add https://github.com/your-username/your-repo-name`
+
+The BeeAI Platform will automatically:
+- Clone your repository
+- Build a Docker image
+- Start the agent container
+- Extract agent configuration directly from the /agents endpoint
+- Register the agent in the platform
 
 #### Version Management
 
