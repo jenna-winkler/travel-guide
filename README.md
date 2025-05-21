@@ -67,7 +67,7 @@ Modify this file to implement your own agent's logic. Here are some key points t
 > [!TIP]
 > You can define multiple agents in the same service by creating additional decorated functions.
 
-4. **Add dependencies** to the `pyproject.toml` file (if needed). After updating the dependencies, synchronize them with `uv sync`.
+4. **Update project metadata and dependencies** in the `pyproject.toml` file. After updating the metadata and dependencies, synchronize them with `uv sync`.
 
 ## Running Agents Locally
 
