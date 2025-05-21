@@ -24,6 +24,12 @@ In this template, you'll find:
 └── README.md                               # Project documentation
 ```
 
+### Key files to focus on:
+
+- `agent.py`: This is where you'll implement your agent logic
+- `pyproject.toml`: Update this if you need to add dependencies
+- `Dockerfile`: Modify if you need special deployment configuration
+
 ## Requirements
 
 - [BeeAI Platform](https://docs.beeai.dev/introduction/quickstart) installed
