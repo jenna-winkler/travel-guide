@@ -26,7 +26,7 @@ In this template, you'll find:
 
 ## Requirements
 
-- [BeeAI Platform installed](https://docs.beeai.dev/introduction/quickstart)
+- [BeeAI Platform](https://docs.beeai.dev/introduction/quickstart) installed
 - Python 3.11 or higher
 - [UV package manager](https://docs.astral.sh/uv/) for dependency management
 
