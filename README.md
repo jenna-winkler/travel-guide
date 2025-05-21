@@ -57,7 +57,7 @@ async def example_agent(input: list[Message], context: Context) -> AsyncGenerato
 ```
 
 Modify this file to implement your own agent's logic. Here are some key points to consider when creating your agent:
-- The function name (example_agent above) is used as the unique identifier for the agent in the BeeAI Platform. You can override this in the metadata.
+- The function name (example_agent above) is used as the unique id for the agent in the platform. You can override this in the metadata.
 - The docstring is used as the agent's description in the platform UI. You can also override this in the metadata.
 - The `@server.agent()` decorator registers your function as an agent and can customize its appearance and behavior
 - Your agent receives messages in the `input` list, with the most recent message at the end
@@ -66,6 +66,8 @@ Modify this file to implement your own agent's logic. Here are some key points t
 
 > [!TIP]
 > You can define multiple agents in the same service by creating additional decorated functions.
+
+4. **Add dependencies** to the `pyproject.toml` file (if needed). After updating the dependencies, synchronize them with `uv sync`.
 
 ## Running Agents Locally
 
