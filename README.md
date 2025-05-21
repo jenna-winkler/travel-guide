@@ -26,6 +26,7 @@ In this template, you'll find:
 
 ## Requirements
 
+- [BeeAI Platform installed](https://docs.beeai.dev/introduction/quickstart)
 - Python 3.11 or higher
 - [UV package manager](https://docs.astral.sh/uv/) for dependency management
 
@@ -48,6 +49,16 @@ async def example_agent(input: list[Message], context: Context) -> AsyncGenerato
     hello_template: str = os.getenv("HELLO_TEMPLATE", "Ciao %s!")
     yield MessagePart(content=hello_template % str(input[-1]))
 ```
+
+Modify this file to implement your own agent's logic. Here are some tips for creating your agent:
+- The `@server.agent()` decorator registers your function as an agent
+- The `metadata` parameter can define UI behavior and other agent properties
+- Your agent receives messages in the `input` list
+- Use `yield` to return responses
+- Access conversation context through the `context` parameter
+
+> [!TIP]
+> You can define multiple agents in the same service by creating additional decorated functions.
 
 ## Running Agents Locally
 
@@ -91,7 +102,7 @@ When running agents locally with `uv run server`, they are automatically registe
 ### Deployment from GitHub
 
 To share your agent with others or deploy it to the BeeAI Platform:
-1. Create an `agent.yaml` manifest in your repository to specify agent metadata
+1. Create an `agent.yaml` manifest in your repository to specify agent metadata. This file defines how your agent appears and behaves in the BeeAI Platform.
 2. Add the agent to BeeAI using: `beeai add https://github.com/your-username/your-repo-name`
 
 #### Version Management
