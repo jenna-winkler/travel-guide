@@ -57,10 +57,11 @@ async def example_agent(input: list[Message], context: Context) -> AsyncGenerato
 ```
 
 Modify this file to implement your own agent's logic. Here are some tips for creating your agent:
-- Function name becomes the agent name and is used as the unique identifier for the agent in the BeeAI Platform
-- Docstring is used as the agent's description in the platform UI
 - The `@server.agent()` decorator registers your function as an agent
 - The `metadata` parameter can define UI behavior and other agent properties
+- If you don't specify name or description in the metadata, they will be automatically extracted from:
+  - `name`: Derived from the function name
+  - `description`: Taken from the function's docstring
 - Your agent receives messages in the `input` list
 - Use `yield` to return responses
 - Access conversation context through the `context` parameter
