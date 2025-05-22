@@ -61,7 +61,7 @@ Modify this file to implement your own agent's logic. Here are some key points t
 - The docstring is used as the agent's description in the platform UI. You can also override this in the metadata.
 - The `@server.agent()` decorator registers your function as an agent and can customize its appearance and behavior
 - Your agent receives messages in the `input` list, with the most recent message at the end
-- Return responses using `yield MessagePart(content="text")`
+- Return responses using `yield MessagePart(content="text")` or even simply `yield "text"`
 - Access conversation context through the `context` parameter
 
 > [!TIP]
