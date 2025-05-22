@@ -84,7 +84,6 @@ To create the most engaging and helpful interface for your users, define the fol
             "user_greeting": "Hello! I'm your AI assistant. How can I help you today?"
         },  # type: ignore[call-arg]
         framework="BeeAI",
-        programming_language="Python",
         recommended_models=["llama3.3:70b-instruct-fp16"],
         author={
             "name": "John Smith",
