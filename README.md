@@ -78,7 +78,7 @@ To test your agent locally:
 uv run server
 ```
 
-This will start a local server on http://127.0.0.1:8000 by default. You'll get an output similar to:
+This will start a local http server on http://127.0.0.1:8000 by default. You'll get an output similar to:
 
 ```
 INFO:     Started server process [86448]
