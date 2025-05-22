@@ -28,7 +28,7 @@ In this template, you'll find:
 
 - `agent.py`: This is where you'll implement your agent logic
 - `pyproject.toml`: Update this if you need to add dependencies
-- `Dockerfile`: Modify if you need special deployment configuration
+- `Dockerfile`: Modify if you need special build configuration
 
 ## Requirements
 
