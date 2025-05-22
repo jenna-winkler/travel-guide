@@ -4,7 +4,7 @@ This repository provides a template for creating a Python agent that can be used
 
 ## Overview
 
-BeeAI agents are Python-based services that can be run locally or deployed to the BeeAI Platform. Each agent implements specific functionality through the ACP (Agent Communication Protocol) SDK.
+BeeAI agents are Python-based services that can be run locally or deployed to the BeeAI Platform. Each agent exposes specific functionality through the ACP (Agent Communication Protocol) which is implemented via SDK.
 
 In this template, you'll find:
 - A basic agent implementation
