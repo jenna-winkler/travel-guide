@@ -8,7 +8,7 @@ BeeAI agents are Python-based services that can be run locally or deployed to th
 
 In this template, you'll find:
 - A basic agent implementation
-- Docker configuration for deployment
+- Docker configuration to ease the build of agent
 - Project structure for building your own agents
 
 ## Project Structure
