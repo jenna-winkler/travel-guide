@@ -95,10 +95,6 @@ To create the most engaging and helpful interface for your users, define the fol
             {"type": "tool", "name": "Wikipedia"},
             {"type": "tool", "name": "Google Search"}
         ],
-        status={
-            "avg_run_tokens": 123,
-            "avg_run_time_seconds": 123
-        }
     ),
 )
 ```
