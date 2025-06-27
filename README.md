@@ -48,7 +48,11 @@ Here's an example of the included template agent:
 
 ```py
 @server.agent(
-    metadata=Metadata(ui={"type": "hands-off"})
+    metadata=Metadata(
+        annotations=Annotations(
+            beeai_ui=PlatformUIAnnotation(ui_type=PlatformUIType.HANDSOFF)
+        )
+    )
 )
 async def example_agent(input: list[Message], context: Context) -> AsyncGenerator[RunYield, RunYieldResume]:
     """Polite agent that greets the user"""
@@ -67,7 +71,7 @@ Modify this file to implement your own agent's logic. Here are some key points t
 > [!TIP]
 > You can define multiple agents in the same service by creating additional decorated functions.
 
-### 🖥️ Enhancing the User Experience with GUI Metadata
+### 🖥️ Enhancing the User Experience with `PlatformUIAnnotation`
 
 To create the most engaging and helpful interface for your users, define the following metadata in your agent decorator. This information shapes how your agent is presented in the GUI.
 
@@ -79,23 +83,27 @@ To create the most engaging and helpful interface for your users, define the fol
         "Wikipedia lookups, and weather updates through integrated tools"
     ),
     metadata=Metadata(
-        ui={
-            "type": "chat",
-            "user_greeting": "Hello! I'm your AI assistant. How can I help you today?"
-        },  # type: ignore[call-arg]
+        annotations=Annotations(
+            beeai_ui=PlatformUIAnnotation(
+                ui_type=PlatformUIType.CHAT,
+                user_greeting="Hello! I'm your AI assistant. How can I help you today?",
+                tools=[
+                    AgentToolInfo(name="Weather", description=""),
+                    AgentToolInfo(name="Wikipedia", description=""),
+                    AgentToolInfo(
+                        name="Google Search", description=""
+                    ),
+                ]
+            )
+        ),
         framework="BeeAI",
         recommended_models=["llama3.3:70b-instruct-fp16"],
         author={
             "name": "John Smith",
             "email": "jsmith@example.com",
             "url": "https://example.com"
-        },
-        dependencies=[
-            {"type": "tool", "name": "Weather"},
-            {"type": "tool", "name": "Wikipedia"},
-            {"type": "tool", "name": "Google Search"}
-        ],
-    ),
+        }
+    )
 )
 ```
 
