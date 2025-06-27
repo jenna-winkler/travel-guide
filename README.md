@@ -71,7 +71,7 @@ Modify this file to implement your own agent's logic. Here are some key points t
 > [!TIP]
 > You can define multiple agents in the same service by creating additional decorated functions.
 
-### 🖥️ Enhancing the User Experience with GUI Metadata
+### 🖥️ Enhancing the User Experience with `PlatformUIAnnotation`
 
 To create the most engaging and helpful interface for your users, define the following metadata in your agent decorator. This information shapes how your agent is presented in the GUI.
 
