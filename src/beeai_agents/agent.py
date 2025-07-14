@@ -1,11 +1,12 @@
 import os
+import uuid
 from collections.abc import AsyncGenerator
 
 from acp_sdk import Annotations, MessagePart, Metadata
 from acp_sdk.models import Message
 from acp_sdk.models.models import CitationMetadata, TrajectoryMetadata
 from acp_sdk.models.platform import AgentToolInfo, PlatformUIAnnotation, PlatformUIType
-from acp_sdk.server import Context, Server
+from acp_sdk.server import Context, RunYield, RunYieldResume, Server
 
 from beeai_framework.agents.experimental import RequirementAgent
 from beeai_framework.agents.experimental.requirements.conditional import ConditionalRequirement
@@ -137,7 +138,7 @@ def get_or_create_memory(session_id: str) -> UnconstrainedMemory:
         license="Apache 2.0"
     )
 )
-async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator:
+async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator[RunYield, RunYieldResume]:
     """
     Comprehensive travel guide agent that combines:
     - Dynamic citations from search results
@@ -154,6 +155,8 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
     session_memory = get_or_create_memory(session_id)
     
     yield MessagePart(metadata=TrajectoryMetadata(
+        kind="trajectory",
+        key=str(uuid.uuid4()),
         message=f"🌍 Travel Guide processing: '{user_message}'"
     ))
     
@@ -165,7 +168,7 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
         tracked_weather = TrackedOpenMeteoTool(tool_tracker)
         
         agent = RequirementAgent(
-            llm=ChatModel.from_name("ollama:granite3.3:8b"),
+            llm=ChatModel.from_name("ollama:granite3.3:8b-beeai"),
             memory=session_memory,  
             tools=[
                 ThinkTool(), 
@@ -223,6 +226,8 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
         )
         
         yield MessagePart(metadata=TrajectoryMetadata(
+            kind="trajectory",
+            key=str(uuid.uuid4()),
             message=f"🛠️ Travel Guide initialized with Think, Wikipedia, Weather, and Search tools"
         ))
         
@@ -254,6 +259,8 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
                     tool_name = "DuckDuckGo"
                     
                 yield MessagePart(metadata=TrajectoryMetadata(
+                    kind="trajectory",
+                    key=str(uuid.uuid4()),
                     message=f"Step {i+1}: {step}",
                     tool_name=tool_name
                 ))
@@ -281,6 +288,7 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
                             if start_idx != -1:
                                 yield MessagePart(
                                     metadata=CitationMetadata(
+                                        kind="citation",
                                         url=result.url,
                                         title=result.title,
                                         description=result.description[:100] + "..." if len(result.description) > 100 else result.description,
@@ -303,6 +311,7 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
                             if start_idx != -1:
                                 yield MessagePart(
                                     metadata=CitationMetadata(
+                                        kind="citation",
                                         url=result.url,
                                         title=result.title,
                                         description=result.description[:100] + "..." if len(result.description) > 100 else result.description,
@@ -325,6 +334,7 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
                         start_idx = response_text.lower().find(word)
                         yield MessagePart(
                             metadata=CitationMetadata(
+                                kind="citation",
                                 url="https://open-meteo.com/",
                                 title="Open-Meteo Weather API",
                                 description="Real-time weather data and forecasts",
@@ -337,11 +347,15 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
                         break
         
         yield MessagePart(metadata=TrajectoryMetadata(
+            kind="trajectory",
+            key=str(uuid.uuid4()),
             message="✅ Travel Guide completed successfully with citations"
         ))
         
     except Exception as e:
         yield MessagePart(metadata=TrajectoryMetadata(
+            kind="trajectory",
+            key=str(uuid.uuid4()),
             message=f"❌ Error: {str(e)}"
         ))
         yield MessagePart(content=f"🚨 Sorry, I encountered an error while planning your trip: {str(e)}")
