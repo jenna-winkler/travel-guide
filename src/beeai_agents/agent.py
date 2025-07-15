@@ -175,7 +175,7 @@ def extract_citations_from_response(response_text: str) -> tuple[list[CitationMe
                 ],
             )
         ),
-        author={"name": "Jenna Winkler"},
+        author={"name": "Jenna Winkler, Tomas Weiss"},
         recommended_models=["granite3.3:8b-beeai"],
         tags=["Travel", "Planning", "Research"],
         framework="BeeAI",
