@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feat/github-actions-example
+      - feat/citations-rework
 
 jobs:
   build:
@@ -42,5 +43,4 @@ jobs:
 
     - name: Build and Push
       run: |
-        beeai build ./ --tag ghcr.io/${{ github.repository }}/my-agent:latest --no-import --multi-platform
-        docker push ghcr.io/${{ github.repository }}/my-agent:latest
+        beeai build ./ True --tag ghcr.io/${{ github.repository }}/my-agent:latest --no-import --multi-platform
