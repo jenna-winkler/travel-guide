@@ -24,7 +24,7 @@ jobs:
         python-version: '3.x'
 
     - name: Install BeeAI CLI
-      run: pip install beeai-cli
+      run: pip install beeai-cli==0.2.15rc6
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v2
