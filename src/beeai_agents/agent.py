@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 from collections.abc import AsyncGenerator
 
@@ -28,9 +29,10 @@ conversation_memories = {}
 
 class TrajectoryCapture:
     """Captures trajectory steps for display"""
+
     def __init__(self):
         self.steps = []
-    
+
     def write(self, message: str) -> int:
         self.steps.append(message.strip())
         return len(message)
@@ -38,55 +40,59 @@ class TrajectoryCapture:
 
 class TrackedTool:
     """Base class for tool tracking"""
+
     def __init__(self, tool_name: str):
         self.tool_name = tool_name
         self.results = []
-    
+
     def add_result(self, result):
         self.results.append(result)
 
 
 class TrackedDuckDuckGoTool(DuckDuckGoSearchTool):
     """DuckDuckGo tool with result tracking"""
+
     def __init__(self, tracker: TrackedTool):
         super().__init__()
         self.tracker = tracker
-    
+
     async def _run(self, input_data, options, context):
         result = await super()._run(input_data, options, context)
-        self.tracker.add_result(('DuckDuckGo', result))
+        self.tracker.add_result(("DuckDuckGo", result))
         return result
 
 
 class TrackedWikipediaTool(WikipediaTool):
     """Wikipedia tool with result tracking"""
+
     def __init__(self, tracker: TrackedTool):
         super().__init__()
         self.tracker = tracker
-    
+
     async def _run(self, input_data, options, context):
         result = await super()._run(input_data, options, context)
-        self.tracker.add_result(('Wikipedia', result))
+        self.tracker.add_result(("Wikipedia", result))
         return result
 
 
 class TrackedOpenMeteoTool(OpenMeteoTool):
     """Weather tool with result tracking"""
+
     def __init__(self, tracker: TrackedTool):
         super().__init__()
         self.tracker = tracker
-    
+
     async def _run(self, input_data, options, context):
         result = await super()._run(input_data, options, context)
-        self.tracker.add_result(('OpenMeteo', result))
+        self.tracker.add_result(("OpenMeteo", result))
         return result
 
 
 def get_session_id(context: Context) -> str:
     """Extract session ID from context, fallback to default if not available"""
-    session_id = getattr(context, 'session_id', None)
+    session_id = getattr(context, "session_id", None)
     if not session_id:
-        session_id = getattr(context, 'headers', {}).get('session-id', 'default')
+        session_id = getattr(context, "headers", {}).get("session-id", "default")
     return str(session_id)
 
 
@@ -95,6 +101,44 @@ def get_or_create_memory(session_id: str) -> UnconstrainedMemory:
     if session_id not in conversation_memories:
         conversation_memories[session_id] = UnconstrainedMemory()
     return conversation_memories[session_id]
+
+
+def extract_citations_from_response(response_text: str) -> tuple[list[CitationMetadata], str]:
+    """Extract citations from response text and return CitationMetadata objects with cleaned text"""
+    citations = []
+    cleaned_text = response_text
+    offset = 0
+
+    citation_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
+
+    for match in re.finditer(citation_pattern, response_text):
+        content = match.group(1)
+        url = match.group(2)
+        original_start = match.start()
+
+        adjusted_start = original_start - offset
+        adjusted_end = adjusted_start + len(content)
+
+        title = url.split("/")[-1].replace("-", " ").title()
+        if not title or title == "":
+            title = content[:50] + "..." if len(content) > 50 else content
+
+        citation = CitationMetadata(
+            kind="citation",
+            url=url,
+            title=title,
+            description=content[:100] + "..." if len(content) > 100 else content,
+            start_index=adjusted_start,
+            end_index=adjusted_end,
+        )
+        citations.append(citation)
+
+        removed_chars = len(match.group(0)) - len(content)
+        offset += removed_chars
+
+    cleaned_text = re.sub(citation_pattern, r"\1", response_text)
+
+    return citations, cleaned_text
 
 
 @server.agent(
@@ -108,35 +152,31 @@ def get_or_create_memory(session_id: str) -> UnconstrainedMemory:
                 display_name="Travel Guide",
                 tools=[
                     AgentToolInfo(
-                        name="Think", 
-                        description="Advanced reasoning and analysis for travel planning, itinerary optimization, and recommendation personalization based on your preferences and constraints."
+                        name="Think",
+                        description="Advanced reasoning and analysis for travel planning, itinerary optimization, and recommendation personalization based on your preferences and constraints.",
                     ),
                     AgentToolInfo(
-                        name="Wikipedia", 
-                        description="Search comprehensive information about destinations, attractions, history, culture, and local knowledge from Wikipedia's vast database."
+                        name="Wikipedia",
+                        description="Search comprehensive information about destinations, attractions, history, culture, and local knowledge from Wikipedia's vast database.",
                     ),
                     AgentToolInfo(
-                        name="Weather", 
-                        description="Get current weather conditions, forecasts, and climate information for any destination to help with travel planning and packing decisions."
+                        name="Weather",
+                        description="Get current weather conditions, forecasts, and climate information for any destination to help with travel planning and packing decisions.",
                     ),
                     AgentToolInfo(
-                        name="DuckDuckGo", 
-                        description="Search for current information about restaurants, hotels, events, transportation, and real-time travel updates from across the web."
+                        name="DuckDuckGo",
+                        description="Search for current information about restaurants, hotels, events, transportation, and real-time travel updates from across the web.",
                     ),
-                ]
+                ],
             )
         ),
-        author={
-            "name": "Jenna Winkler"
-        },
-        recommended_models=[
-            "granite3.3:8b-beeai"
-        ],
+        author={"name": "Jenna Winkler"},
+        recommended_models=["granite3.3:8b-beeai"],
         tags=["Travel", "Planning", "Research"],
         framework="BeeAI",
         programming_language="Python",
-        license="Apache 2.0"
-    )
+        license="Apache 2.0",
+    ),
 )
 async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator[RunYield, RunYieldResume]:
     """
@@ -145,219 +185,123 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
     - Trajectory tracking for transparency
     - Multi-tool integration for comprehensive travel planning
     """
-    
+
     user_message = input[-1].parts[0].content if input else "Hello"
     session_id = get_session_id(context)
-    
+
     tool_tracker = TrackedTool("travel_guide")
     trajectory = TrajectoryCapture()
-    
+
     session_memory = get_or_create_memory(session_id)
-    
-    yield MessagePart(metadata=TrajectoryMetadata(
-        kind="trajectory",
-        key=str(uuid.uuid4()),
-        message=f"🌍 Travel Guide processing: '{user_message}'"
-    ))
-    
+
+    yield MessagePart(
+        metadata=TrajectoryMetadata(
+            kind="trajectory", key=str(uuid.uuid4()), message=f"🌍 Travel Guide processing: '{user_message}'"
+        )
+    )
+
     try:
         await session_memory.add(UserMessage(user_message))
-        
+
         tracked_duckduckgo = TrackedDuckDuckGoTool(tool_tracker)
         tracked_wikipedia = TrackedWikipediaTool(tool_tracker)
         tracked_weather = TrackedOpenMeteoTool(tool_tracker)
-        
+
         agent = RequirementAgent(
             llm=ChatModel.from_name("ollama:granite3.3:8b-beeai"),
-            memory=session_memory,  
-            tools=[
-                ThinkTool(), 
-                tracked_wikipedia, 
-                tracked_weather, 
-                tracked_duckduckgo
-            ],
+            memory=session_memory,
+            tools=[ThinkTool(), tracked_wikipedia, tracked_weather, tracked_duckduckgo],
             requirements=[
                 ConditionalRequirement(
-                    ThinkTool, 
-                    force_at_step=1, 
-                    force_after=Tool, 
-                    consecutive_allowed=False,
-                    max_invocations=3 
+                    ThinkTool, force_at_step=1, force_after=Tool, consecutive_allowed=False, max_invocations=3
                 ),
-                ConditionalRequirement(
-                    tracked_wikipedia,
-                    max_invocations=1,
-                    consecutive_allowed=False
-                ),
-                ConditionalRequirement(
-                    tracked_weather,
-                    max_invocations=1,
-                    consecutive_allowed=False
-                ),
-                ConditionalRequirement(
-                    tracked_duckduckgo,
-                    max_invocations=1, 
-                    consecutive_allowed=False
-                )
+                ConditionalRequirement(tracked_wikipedia, max_invocations=1, consecutive_allowed=False),
+                ConditionalRequirement(tracked_weather, max_invocations=1, consecutive_allowed=False),
+                ConditionalRequirement(tracked_duckduckgo, max_invocations=1, consecutive_allowed=False),
             ],
-            instructions="""You are a comprehensive travel guide assistant. Your goal is to provide helpful, accurate, and personalized travel recommendations.
+            instructions="""
+            You are a comprehensive travel guide assistant.
 
-            IMPORTANT WORKFLOW:
-            1. Think about the user's request first
-            2. Gather information efficiently using tools (don't repeat searches unnecessarily)
-            3. Provide a comprehensive final answer based on the information gathered
+            Your goal is to analyse user request to plan a trip.
 
-            For travel planning queries:
-            1. First, think about what information would be most helpful
-            2. Use Wikipedia for destination background, history, and general information (search once per destination)
-            3. Use OpenMeteo for current weather conditions and forecasts (search once per location)
-            4. Use DuckDuckGo for current restaurant recommendations, events, hotels, and real-time information (be specific in searches)
-            
-            Always provide in your final answer:
-            - Practical travel advice
-            - Local insights and cultural tips
-            - Weather-appropriate recommendations
-            - Current and up-to-date information
-            - Personalized suggestions based on user preferences
-            
-            Be conversational, helpful, and enthusiastic about travel while providing accurate information. 
-            
-            CRITICAL: Once you have gathered sufficient information, provide your comprehensive final answer. Do not continue searching unnecessarily."""
+            First, think about what information would be most helpful based on the user query.
+
+            Then use the following tools to gather accurate information based on your analysis.
+
+            1. Use Wikipedia for destination background, history, and general information (search once per destination).
+            2. Use DuckDuckGo for current restaurant recommendations, events, hotels, and real-time information (be specific in searches).
+            3. Use OpenMeteo to get current weather conditions and forecasts (search once per location)
+
+            Return comprehensive final answer in Markdown format that first describes the destination followed by a plan for the trip.
+            You need to base everything off the information you've gathered from Wikipedia and DuckDuckGo and OpenMeteo.
+
+            Provide final answer in markdown format while being conversational, helpful and enthusiastic about travel based on accurate information gathered from the tools.
+
+            !!!CRITICAL!!!
+
+            In the final answer everything that is factual and obtained from Wikipedia, DuckDuckGo or OpenMeteo should be cited in format: [Factual information](URL)
+
+            Couple examples:
+            - The experience you will encouter is full of culinary delights! [Paris is well known](https://en.wikipedia.org/wiki/Paris) for its rich history and vibrant culinary scene.
+            - During your visit in following two days there are two events you should not miss: [Prague Beer Festival](https://en.wikipedia.org/wiki/Prague_Beer_Festival) and [Prague Music Festival](https://en.wikipedia.org/wiki/Prague_Music_Festival).
+            - If you need a great place to stay, [Hotel Blue Ocean](https://blueocean.com/) is a great choice.
+            - The weather in Oslo is expected to be sunny with a temperature of 20°C according to [OpenMeteo](https://open-meteo.com/), pack your hats & sunglasses!
+            """,
         )
-        
-        yield MessagePart(metadata=TrajectoryMetadata(
-            kind="trajectory",
-            key=str(uuid.uuid4()),
-            message=f"🛠️ Travel Guide initialized with Think, Wikipedia, Weather, and Search tools"
-        ))
-        
-        response = await agent.run(
-            user_message,
-            execution=AgentExecutionConfig(
-                max_iterations=10,  
-                max_retries_per_step=2, 
-                total_max_retries=5 
+
+        yield MessagePart(
+            metadata=TrajectoryMetadata(
+                kind="trajectory",
+                key=str(uuid.uuid4()),
+                message=f"🛠️ Travel Guide initialized with Think, Wikipedia, Weather, and Search tools",
             )
-        ).middleware(
-            GlobalTrajectoryMiddleware(target=trajectory, included=[Tool])
         )
-        
+
+        response = await agent.run(
+            user_message, execution=AgentExecutionConfig(max_iterations=10, max_retries_per_step=2, total_max_retries=5)
+        ).middleware(GlobalTrajectoryMiddleware(target=trajectory, included=[Tool]))
+
         response_text = response.answer.text
-        
+
         await session_memory.add(AssistantMessage(response_text))
-        
+
         for i, step in enumerate(trajectory.steps):
             if step.strip():
                 tool_name = None
                 if "ThinkTool" in step:
                     tool_name = "Think"
                 elif "WikipediaTool" in step:
-                    tool_name = "Wikipedia"  
+                    tool_name = "Wikipedia"
                 elif "OpenMeteoTool" in step:
                     tool_name = "Weather"
                 elif "DuckDuckGo" in step:
                     tool_name = "DuckDuckGo"
-                    
-                yield MessagePart(metadata=TrajectoryMetadata(
-                    kind="trajectory",
-                    key=str(uuid.uuid4()),
-                    message=f"Step {i+1}: {step}",
-                    tool_name=tool_name
-                ))
-        
-        yield MessagePart(content=response_text)
-        
-        citation_count = 0
-        total_citations = 0
 
-        for tool_name, tool_output in tool_tracker.results:
-            if total_citations >= 10:  # Global limit
-                break
-            
-            tool_citation_count = 0  # Track citations per tool
-            max_citations_per_tool = 2  # Limit each tool to 2 citations
-            
-            if tool_name == 'Wikipedia' and hasattr(tool_output, 'results') and tool_output.results:
-                for result in tool_output.results:
-                    if tool_citation_count >= max_citations_per_tool or total_citations >= 10:
-                        break
-                    title_words = result.title.split()
-                    for word in title_words:
-                        if word.lower() in response_text.lower() and len(word) > 3:
-                            start_idx = response_text.lower().find(word.lower())
-                            if start_idx != -1:
-                                yield MessagePart(
-                                    metadata=CitationMetadata(
-                                        kind="citation",
-                                        url=result.url,
-                                        title=result.title,
-                                        description=result.description[:100] + "..." if len(result.description) > 100 else result.description,
-                                        start_index=start_idx,
-                                        end_index=start_idx + len(word)
-                                    )
-                                )
-                                tool_citation_count += 1
-                                total_citations += 1
-                                break
-                                
-            elif tool_name == 'DuckDuckGo' and hasattr(tool_output, 'results') and tool_output.results:
-                for result in tool_output.results:
-                    if tool_citation_count >= max_citations_per_tool or total_citations >= 10:
-                        break
-                    title_words = result.title.split()
-                    for word in title_words:
-                        if word.lower() in response_text.lower() and len(word) > 4:
-                            start_idx = response_text.lower().find(word.lower())
-                            if start_idx != -1:
-                                yield MessagePart(
-                                    metadata=CitationMetadata(
-                                        kind="citation",
-                                        url=result.url,
-                                        title=result.title,
-                                        description=result.description[:100] + "..." if len(result.description) > 100 else result.description,
-                                        start_index=start_idx,
-                                        end_index=start_idx + len(word)
-                                    )
-                                )
-                                tool_citation_count += 1
-                                total_citations += 1
-                                break
-                                
-            elif tool_name == 'OpenMeteo':
-                if tool_citation_count >= max_citations_per_tool or total_citations >= 10:
-                    continue
-                weather_words = ["weather", "temperature", "warm", "cool", "forecast", "conditions", "climate", "rain", "sunny", "cloudy"]
-                for word in weather_words:
-                    if tool_citation_count >= max_citations_per_tool or total_citations >= 10:
-                        break
-                    if word in response_text.lower():
-                        start_idx = response_text.lower().find(word)
-                        yield MessagePart(
-                            metadata=CitationMetadata(
-                                kind="citation",
-                                url="https://open-meteo.com/",
-                                title="Open-Meteo Weather API",
-                                description="Real-time weather data and forecasts",
-                                start_index=start_idx,
-                                end_index=start_idx + len(word)
-                            )
-                        )
-                        tool_citation_count += 1
-                        total_citations += 1
-                        break
-        
-        yield MessagePart(metadata=TrajectoryMetadata(
-            kind="trajectory",
-            key=str(uuid.uuid4()),
-            message="✅ Travel Guide completed successfully with citations"
-        ))
-        
+                yield MessagePart(
+                    metadata=TrajectoryMetadata(
+                        kind="trajectory", key=str(uuid.uuid4()), message=f"Step {i + 1}: {step}", tool_name=tool_name
+                    )
+                )
+
+        citations, cleaned_response_text = extract_citations_from_response(response_text)
+
+        yield MessagePart(content=cleaned_response_text)
+
+        for citation in citations:
+            yield MessagePart(metadata=citation)
+
+        yield MessagePart(
+            metadata=TrajectoryMetadata(
+                kind="trajectory",
+                key=str(uuid.uuid4()),
+                message="✅ Travel Guide completed successfully with citations",
+            )
+        )
+
     except Exception as e:
-        yield MessagePart(metadata=TrajectoryMetadata(
-            kind="trajectory",
-            key=str(uuid.uuid4()),
-            message=f"❌ Error: {str(e)}"
-        ))
+        yield MessagePart(
+            metadata=TrajectoryMetadata(kind="trajectory", key=str(uuid.uuid4()), message=f"❌ Error: {str(e)}")
+        )
         yield MessagePart(content=f"🚨 Sorry, I encountered an error while planning your trip: {str(e)}")
 
 
