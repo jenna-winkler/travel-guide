@@ -43,4 +43,4 @@ jobs:
 
     - name: Build and Push
       run: |
-        beeai build ./ --tag ghcr.io/${{ github.repository }}/my-agent:latest --no-import --multi-platform
+        beeai build ./ --tag ghcr.io/${{ github.repository }}/my-agent:latest --no-import --multi-platform --push
