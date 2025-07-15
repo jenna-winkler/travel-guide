@@ -3,6 +3,8 @@ import re
 import uuid
 from collections.abc import AsyncGenerator
 
+from dotenv import load_dotenv
+
 from acp_sdk import Annotations, MessagePart, Metadata
 from acp_sdk.models import Message
 from acp_sdk.models.models import CitationMetadata, TrajectoryMetadata
@@ -21,6 +23,9 @@ from beeai_framework.tools.search.duckduckgo import DuckDuckGoSearchTool
 from beeai_framework.tools.search.wikipedia import WikipediaTool
 from beeai_framework.tools.think import ThinkTool
 from beeai_framework.tools.weather import OpenMeteoTool
+
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+model = os.getenv("LLM_MODEL", "ollama:granite3.3:8b-beeai")
 
 server = Server()
 
@@ -208,7 +213,7 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
         tracked_weather = TrackedOpenMeteoTool(tool_tracker)
 
         agent = RequirementAgent(
-            llm=ChatModel.from_name("ollama:granite3.3:8b-beeai"),
+            llm=ChatModel.from_name(model),
             memory=session_memory,
             tools=[ThinkTool(), tracked_wikipedia, tracked_weather, tracked_duckduckgo],
             requirements=[
@@ -239,6 +244,8 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
 
             !!!CRITICAL!!!
 
+            In the final answer must be information that is ALWAYS based on a result of Wikipedia, DuckDuckGo or OpenMeteo, nothing else.            
+
             In the final answer everything that is factual and obtained from Wikipedia, DuckDuckGo or OpenMeteo should be cited in format: [Factual information](URL)
 
             Couple examples:
@@ -253,7 +260,7 @@ async def travel_guide(input: list[Message], context: Context) -> AsyncGenerator
             metadata=TrajectoryMetadata(
                 kind="trajectory",
                 key=str(uuid.uuid4()),
-                message=f"🛠️ Travel Guide initialized with Think, Wikipedia, Weather, and Search tools",
+                message="🛠️ Travel Guide initialized with Think, Wikipedia, Weather, and Search tools",
             )
         )
 
